@@ -1,37 +1,11 @@
 # Lab Summary: Relevance Scoring & Rerankers for Trustworthy AI
 
-## When Reranking Helped Most
+Reranking improved retrieval quality most significantly for open-ended, conceptual queries where embedding similarity retrieved topically adjacent but imprecise chunks. The clearest example was *"How should transparency be implemented in trustworthy AI?"*: baseline similarity ranked a general "Architectures for Trustworthy AI" chunk at #1 (cosine score: 0.672), which mentions transparency only in passing. Both LLM scoring (5/10) and the Cross-Encoder (4.89) correctly demoted it to rank #4, while the directly relevant "1.4 Transparency" chunk — explicitly covering explainability, traceability, and stakeholder communication — rose to rank #2, producing a noticeably more precise answer (baseline: 3/5, reranked: 5/5). For the human oversight query, reranking introduced two new sources (p.13, p.24) covering governance frameworks and ethics panels that baseline missed entirely, making the answer more complete and actionable (3/5 → 4/5). By contrast, reranking made no meaningful difference for the narrow legal query on high-risk AI system requirements — the term appears verbatim in the EU AI Act, cosine similarity was already sufficient, and all three methods returned the same top chunk (both scored 4/5). A secondary finding from metadata filtering: the EU AI Act returns zero results for "human oversight" because it uses different legal terminology ("human review", "conformity assessment") — illustrating that reranking alone cannot compensate for query-corpus terminology mismatches, and that domain-aware query formulation remains essential alongside any reranking strategy.
 
-Reranking made the clearest difference on **ambiguous, cross-domain queries** where embedding similarity retrieved topically adjacent but imprecise chunks. The strongest example was the query *"How should transparency be implemented in trustworthy AI?"*: baseline similarity ranked the "Architectures for Trustworthy AI" chunk #1 (score: 0.672) — a general requirements overview that mentions transparency only in passing. Both LLM scoring (5/10) and the Cross-Encoder (4.89) correctly demoted it to rank #4, while the directly relevant "1.4 Transparency" chunk (explicitly addressing explicability, traceability, and communication requirements) rose to rank #2. This is the core value of reranking: similarity measures surface proximity, not semantic fit to the query intent.
+## When to Use Reranking
 
-For the query *"What is the role of human oversight in AI decision-making?"*, LLM scoring and Cross-Encoder both surfaced the "sub-conscious processes / manipulation / herding" chunk at rank #1, which addresses *why* human oversight matters — a more precise answer than the baseline's top result, which described general decision support options.
+Use reranking when queries are open-ended or conceptual, the corpus mixes document types with different writing styles (legal text, ethics guidelines, podcast transcripts), or baseline retrieval returns broadly relevant but imprecise results. Skip reranking when queries contain exact legal terminology that matches the corpus directly, latency or API cost is a hard constraint, or baseline similarity scores are already consistently above 0.85.
 
-By contrast, reranking made **no meaningful difference** for the narrow legal query *"What are the requirements for high-risk AI systems?"* — all three methods returned the same EU AI Act Article 8 chunk at rank #1, with consistent ranking throughout. The query was specific enough that cosine similarity alone was sufficient.
-
-## Recommendation: When to Use Reranking
-
-Use reranking when:
-- Queries are open-ended or conceptual (e.g. "how should X be implemented")
-- The corpus mixes document types with different writing styles (legal text + transcripts)
-- Baseline retrieval returns broadly relevant but imprecise results
-- Precision matters more than latency (legal tech, compliance, research)
-
-Skip reranking when:
-- Queries are narrow and domain-specific with explicit terminology matching
-- Baseline similarity scores are already high (>0.85) and consistent
-- Latency or API cost is a hard constraint
-
-## Method Comparison
-
-| Method | Strengths | Weaknesses |
-|--------|-----------|------------|
-| **LLM Scoring (gpt-4o-mini)** | Understands query intent deeply, flexible prompt | API cost per query, ~20-30s latency for k=10 |
-| **Cross-Encoder (ms-marco-MiniLM)** | Free, local, fast after model load | Less nuanced than LLM for legal/conceptual queries |
-| **Baseline (cosine similarity)** | Instant, no extra cost | Misses semantic fit for ambiguous queries |
-
-## Evidence
-
-Full before/after comparison tables and retrieval outputs are in `relevance_scoring_rerankers.ipynb` (Cells 7–11).
 
 ## Setup Notes
 
