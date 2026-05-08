@@ -1,0 +1,24 @@
+Lab Summary: Relevance Scoring & Rerankers for Trustworthy AI
+When Reranking Helped Most
+Reranking improves retrieval quality most significantly for ambiguous or cross-domain queries — cases where embedding similarity alone retrieved topically adjacent but not precisely relevant chunks. For example, the query "What is the role of human oversight in AI decision-making?" returned five ethics guidelines chunks via baseline similarity search, but several were loosely related (general requirements lists, audit checklists) rather than directly addressing human oversight mechanisms. With LLM-based relevance scoring, chunks that explicitly discussed human agency, override mechanisms, and the Human-in-the-Loop principle were consistently ranked higher.
+The podcast transcript benefited most from reranking: its 25 chunks are conversational and context-dependent, making cosine similarity a weaker signal. Reranking closed the gap between the podcast and the dense legal text by evaluating semantic fit to the query rather than surface-level vector proximity.
+For narrow, well-defined legal queries (e.g., "requirements for high-risk AI systems"), baseline retrieval already returned precise results from the EU AI Act — reranking made minimal difference. The similarity scores were already high (>0.85) and the top-ranked chunks were directly on-point.
+Recommendation: When to Use Reranking
+Use reranking when:
+
+Queries are open-ended, conversational, or cross-document
+The corpus mixes document types with different writing styles (legal text + transcripts)
+Precision matters more than speed (legal tech, compliance, research)
+Initial retrieval pool is large (k≥15) and top results contain noise
+
+Skip reranking when:
+
+Queries are narrow and domain-specific with a well-structured corpus
+Latency is critical and the baseline already achieves high precision
+Cost is a constraint — LLM-based reranking adds per-query API cost
+
+Setup Notes
+
+Audio transcription via Whisper required chunking the .m4a into 10-min segments (file exceeded 25MB API limit)
+French version of ethics guidelines was excluded to prevent language mixing in retrieval
+langchain-pinecone==0.2.13 required (not 0.2.0) for compatibility with LangChain 1.x

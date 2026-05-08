@@ -1,0 +1,94 @@
+# LAB: Relevance Scoring & Rerankers for Trustworthy AI — EU AI Act
+
+Advanced RAG system demonstrating how reranking improves retrieval quality on legal and ethics documents.
+
+## Project Structure
+
+```
+├── data/
+│   ├── eu_ai_act.pdf
+│   ├── ai_hleg_ethics_guidelines_for_trustworthy_ai-en_(...).pdf
+│   ├── ethics_guidelines_for_trustworthy_ai-fr_(...).pdf   ← skipped (FR)
+│   ├── The_Blueprint_For_Trustworthy_AI.m4a
+│   └── The_Blueprint_For_Trustworthy_AI_transcript.txt     ← auto-generated
+├── relevance_scoring_rerankers.ipynb
+├── lab_summary.md
+├── .env                  ← NOT committed (API keys)
+├── .gitignore
+└── README.md
+```
+
+## How to Run
+
+### 1. Prerequisites
+- Python 3.12+
+- Anaconda environment (`myenv`)
+- ffmpeg installed: `brew install ffmpeg`
+- OpenAI API key (with billing enabled)
+- Pinecone API key (free tier sufficient)
+
+### 2. Install Dependencies
+Run Cell 0 in the notebook (once), or:
+```bash
+pip install langchain==1.2.17 langchain-openai==1.2.1 langchain-community==0.4.1 \
+    langchain-pinecone==0.2.13 pinecone openai pypdf python-dotenv \
+    tiktoken pandas tqdm pydub
+```
+
+### 3. Configure `.env`
+```
+OPENAI_API_KEY=sk-proj-...
+PINECONE_API_KEY=...
+```
+
+### 4. Run Notebook
+Open `relevance_scoring_rerankers.ipynb` and run cells sequentially:
+
+| Cell | Purpose |
+|------|---------|
+| 0 | Install dependencies (run once, then comment out) |
+| 1 | Load API keys from `.env` |
+| 2 | Create Pinecone index (`trustworthy-ai-lab`, 1536-dim, cosine) |
+| 3 | Load PDFs with metadata tagging |
+| 4 | Transcribe podcast audio via Whisper (cached after first run) |
+| 5 | Chunk all documents (800 chars, 150 overlap) |
+| 6 | Generate embeddings → upload to Pinecone |
+| 7 | Baseline retrieval (k=5, no reranking) |
+| 8 | Baseline with similarity scores |
+
+## Data Sources
+
+| File | Type | Chunks | Category |
+|------|------|--------|----------|
+| `eu_ai_act.pdf` | PDF | 1030 | `eu_ai_act` |
+| `ai_hleg_ethics_guidelines_...-en.pdf` | PDF | 257 | `ethics_guidelines` |
+| `The_Blueprint_For_Trustworthy_AI.m4a` | Audio → Whisper | 25 | `trustworthy_ai_podcast` |
+
+**Total: 1,312 chunks** — `text-embedding-3-small` (1536 dimensions) — Pinecone Serverless
+
+## Key Technical Decisions
+
+| Choice | Rationale |
+|--------|-----------|
+| `text-embedding-3-small` | Cost-efficient, strong semantic performance |
+| Pinecone Serverless | Persistent, no infra management |
+| `chunk_size=800` | Balances context richness vs. precision for legal text |
+| Whisper chunking | Splits audio into 10-min segments to bypass 25MB API limit |
+| FR document excluded | Prevents language mixing in retrieval |
+
+## Dependencies
+
+```
+langchain==1.2.17
+langchain-openai==1.2.1
+langchain-community==0.4.1
+langchain-pinecone==0.2.13
+pinecone==7.3.0
+openai==2.36.0
+pypdf==6.10.2
+pydub + ffmpeg (system)
+python-dotenv==1.2.2
+tiktoken==0.12.0
+pandas==3.0.2
+tqdm==4.67.3
+```
